@@ -16,6 +16,13 @@ public class Main {
         ListNode(int val, ListNode next) { this.val = val; this.next = next; }
     }
     public static void main(String[] args){
+        huaweiChitaozi();
+        huaweiCPUCost();
+        findStringFirstOccur();
+        replaceString2();
+        replaceString2Function();
+        replaceString();
+        reverseString();
         threeSum();
         arrayIntersection();
         findCommonStrArray();
@@ -39,6 +46,288 @@ public class Main {
         linkedListChangeTwoBad();
     }
 
+    /**
+     * 吃桃子，每棵树上桃子个数存在数组nums，求限时 timeLimit 小时内吃完的最慢速度，1小时内如果吃光一个树上必须等下个小时才能换一棵数
+     */
+    public static void huaweiChitaozi(){
+        int []nums = new int[]{1, 3, 6, 8};
+        int timeLimit = 5;
+        int sum =0;
+        for (int i: nums
+             ) {
+            sum+= i;
+        }
+        int left = sum%timeLimit > 0? sum/timeLimit+1 : sum/timeLimit;
+        int right = left + nums.length;
+        //速度由慢到快递增，寻找第一个cost < limit 的 speed
+        //由于数量很大，二分查找找到最接近 timelimit 的 speed
+        //取中间可能得出比 timelimit 略大的结果，需要检查并增加一个速度!
+        int lastCost = 0;
+        while (left < right) {
+            int mid = left + (right-left)/2;
+            int cost = 0;
+            for (int i: nums
+                 ) {
+                cost += i%mid > 0 ? i/mid+1:i/mid;
+            }
+            if (cost > timeLimit) {
+                left = mid+1;
+            } else {
+                right = mid -1;
+            }
+            lastCost = cost;
+        }
+        //这块的逻辑其实不复杂，但是考试时慌张放弃了思考，丢失了对核心问题的关注，出现预期外的问题时不知所措。
+        //思路一定要理清楚，问题的本质，解决办法的原理，可能存在的问题一定要非常清楚才行！！！
+        int res = left;
+        if (lastCost > timeLimit) {
+            res +=1;
+        }
+        printFuncName();
+        System.out.println(res);
+    }
+
+    /**
+     * cpu个数m，任务耗时数组 nums，安排任务先安排耗时最短，任务结束后安排未安排任务，求完成所有任务总耗时
+     */
+    public static  void huaweiCPUCost(){
+        int m = 3;
+        int n = 5;
+        int []nums = new int[]{8,4,3,1,10};
+        Arrays.sort(nums);
+        List <Integer>list = new ArrayList<Integer>();
+        for (int i = 0; i < n; i++) {
+            list.add(nums[i]);
+        }
+
+        int cost = 0;
+        Map <Integer,Integer>map = new HashMap<Integer,Integer>();
+        while (true) {
+            int index = 0;
+            while (index < m) {
+                //运行1秒减去耗时，首次不减，无任务不减
+                if (cost !=0 && map.getOrDefault(index, 0) > 0) {
+                    map.put(index, map.getOrDefault(index, 0)-1);
+                }
+
+                //无任务从未完成里领取
+                if (map.getOrDefault(index, 0) == 0 && list.size() > 0) {
+                    int curCost = list.get(0);
+                    map.put(index, curCost);
+                    list.remove(0);
+                }
+                index++;
+            }
+
+            //所有cpu完成任务，结束
+            Boolean allFinish = true;
+            for (Integer tail: map.keySet()
+            ) {
+                if (map.getOrDefault(tail, 0) != 0){
+                    allFinish = false;
+                    break;
+                }
+            }
+            if (allFinish) {
+                break;
+            }
+            cost++;
+        }
+        printFuncName();
+        System.out.println(cost);
+    }
+    public static void findStringFirstOccur(){
+        printFuncName();
+        System.out.println(strStr("abcd", "d"));
+    }
+    public static int strStr(String haystack, String needle) {
+        char[] s = haystack.toCharArray();
+        char[] p = needle.toCharArray();
+        int m = s.length;
+        int n = p.length;
+        int[] next = new int[n];
+        next[0] = -1;
+        int i = 0, j = -1;
+        while(i < n - 1) {
+            if(j == -1 || p[i] == p[j]) {
+                i++;
+                j++;
+                next[i] = j;
+            } else {
+                j = next[j];
+            }
+        }
+        i = 0;
+        j = 0;
+        while(i < m && j < n) {
+            if(j == -1 || s[i] == p[j]) {
+                i++;
+                j++;
+            } else {
+                // i = i - j + 1;
+                j = next[j];
+            }
+        }
+        return j == n ? i - j : -1;
+    }
+
+    //反转字符串中的单词
+    public static void replaceString2() {
+        String s = "we are  family!";
+        //调API
+        // 除去开头和末尾的空白字符
+        s = s.trim();
+        // 正则匹配连续的空白字符作为分隔符分割
+        List<String> wordList = Arrays.asList(s.split("\\s+"));
+        Collections.reverse(wordList);
+        String res = String.join(" ", wordList);
+
+        //实现拆分，空格合并，反转，组合，逻辑杂糅在一起。缺点可读性差，而且写完就完了收获很小
+        List<String> strs = new ArrayList<String>();
+        int start = 0, end = 0;
+        while (start < s.length()) {
+            char c = s.charAt(start);
+            if (c == ' '){
+                start++;
+                end++;
+            } else {
+                while (end < s.length()) {
+                    if (end == s.length()-1) {
+                        strs.add(String.join("",s.substring(start,s.length())));
+                        start=s.length();
+                        break;
+                    } else {
+                        char c1 = s.charAt(end);
+                        //空格结束
+                        if (c1 == ' ' && end > 0 && s.charAt(end-1)!=' '){
+                            strs.add(String.join("",s.substring(start, end)));
+                        }
+                        //字符串开始
+                        if (c1 != ' ' && end > 0 && s.charAt(end-1)==' '){
+                            start=end;
+                            end++;
+                            break;
+                        }
+                    }
+                    end ++;
+                }
+            }
+        }
+        StringBuilder builder = new StringBuilder();
+        for (int i = strs.size()-1; i >= 0; i--) {
+            builder.append(strs.get(i));
+            if (i!=0){
+                builder.append(" ");
+            }
+        }
+        String res2 = builder.toString();
+
+
+
+        printFuncName();
+        System.out.println(res);
+        System.out.println(res2);
+    }
+
+    //实现拆分，空格合并，反转，组合，功能拆分成函数
+    public static void replaceString2Function() {
+        String s = "we are  family!";
+        StringBuilder builder = new StringBuilder(s);
+        //去多余空格
+        FuncTrimMoreSpace(builder);
+        //反转所有字符
+        FuncReverseChar(builder, 0, builder.toString().length()-1);
+        //反转单词内字符
+        FuncReverseWordChar(builder);
+        printFuncName();
+        System.out.println(builder.toString());
+    }
+    public static void FuncTrimMoreSpace(StringBuilder s) {
+        int i = 0;
+        while (i<s.length()) {
+            if (s.charAt(i) == ' ') {
+                if (i==0
+                        || i==s.length()-1
+                        || (i>0 && s.charAt(i-1)== ' ')){
+                    s.deleteCharAt(i);
+                }
+            }
+            i++;
+        }
+        //双指针法，需要多练习，能熟练用这一模式可以提高效率
+    }
+    public static void FuncReverseChar(StringBuilder s, int start, int end) {
+        int left = start, right = end;
+        while (left<right) {
+            char temp = s.charAt(left);
+            s.setCharAt(left, s.charAt(right));
+            s.setCharAt(right, temp);
+            left++;
+            right--;
+        }
+    }
+    public static void FuncReverseWordChar(StringBuilder s) {
+        int end = 0;
+        //注意需要修改 for 循环的变量时 for 循环的 i++
+        for (int i = 0; i < s.length(); ) {
+            // 循环至单词的末尾
+            while (end < s.length() && s.charAt(end) != ' ') {
+                end++;
+            }
+            // 翻转单词
+            FuncReverseChar(s, i, end-1);
+            // 更新start，去找下一个单词
+            i=end+1;
+            end++;
+        }
+    }
+    public static void replaceString() {
+        String s = "we are family!";
+        //string builder
+        StringBuilder builder = new StringBuilder();
+        for (Character c:s.toCharArray()
+             ) {
+            if (c == ' '){
+                builder.append("%20");
+            } else {
+                builder.append(c);
+            }
+        }
+        String res = builder.toString();
+        //char array
+        char[] charArr = new char[res.length()*3];
+        int change = 0;
+        for (int i = 0; i < res.length(); i++) {
+            char c = res.charAt(i);
+            if (c == ' '){
+                charArr[i+change]='%';
+                charArr[i+change+1]='2';
+                charArr[i+change+2]='0';
+                change+=2;
+            } else {
+                charArr[i]=c;
+            }
+        }
+        String res2 = new String(charArr, 0 , res.length()+change);
+
+        printFuncName();
+        System.out.println(res);
+        System.out.println(res2);
+    }
+    public static void reverseString(){
+        char[]s = new char[]{'h','e','l','l','o'};
+
+        int left = 0, right = s.length-1;
+        while (left < right) {
+            char temp = s[left];
+            s[left]=s[right];
+            s[right]=temp;
+            left++;
+            right--;
+        }
+        printFuncName();
+        System.out.println(s);
+    }
     /**
      * 提供数组，三数之和为0，要求三元组不能重复，返回三元组
      */
@@ -118,7 +407,7 @@ public class Main {
         System.out.println(res);
     }
 
-    //https://leetcode.cn/problems/find-common-characters/
+    //https://leetcode.cn/problems/find-common-characters/ 找出所有在 words 的每个字符串中都出现的共用字符（ 包括重复字符）
     public static void findCommonStrArray(){
         String[] input = new String[]{"bella","label","roller"};
         int[] minFre = new int[26];
