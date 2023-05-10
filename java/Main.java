@@ -15,7 +15,30 @@ public class Main {
         ListNode(int val) { this.val = val; }
         ListNode(int val, ListNode next) { this.val = val; this.next = next; }
     }
+
+     public static class TreeNode {
+         int val;
+         TreeNode left;
+         TreeNode right;
+         TreeNode() {}
+         TreeNode(int val) { this.val = val; }
+         TreeNode(int val, TreeNode left, TreeNode right) {
+             this.val = val;
+             this.left = left;
+             this.right = right;
+         }
+     }
+
     public static void main(String[] args){
+        revertStr();
+        quickSort();
+        gasStation();
+        foreachTreeProblem();
+        isPalindrome();
+        comblieChain();
+        myAtoi();
+        longestCommanPre();
+        waiguanNum();
         huaweiChitaozi();
         huaweiCPUCost();
         findStringFirstOccur();
@@ -46,8 +69,394 @@ public class Main {
         linkedListChangeTwoBad();
     }
 
+    static public void revertStr(){
+        printFuncName();
+        String [] s = {"h","e","l","l","o"};
+//        for (int i = 0; i < s.length/2; i++) {
+//            String left = s[i];
+//            s[i] = s[s.length-i-1];
+//            s[s.length-i-1] = left;
+//        }
+        for (int left = 0, right = s.length - 1; left < right; ++left, --right) {
+            String tmp = s[left];
+            s[left] = s[right];
+            s[right] = tmp;
+        }
+        System.out.println(s);
+    }
+
+    static public void quickSort() {
+        printFuncName();
+        int []input = {3,4,6,5,7,2,11,1,8};
+        quickSortC(input, 0, input.length-1);
+
+        for (int i: input
+             ) {
+            System.out.println(i);
+        }
+    }
+    static public void quickSortC(int [] input, int start, int end) {
+        if (start >= end) {
+            return;
+        }
+        int part = quickSortPart(input, start, end);
+        quickSortC(input, start, part-1);
+        quickSortC(input, part+1, end);
+    }
+    static int quickSortPart(int [] input, int start, int end) {
+        int pivot = input[end];
+        int i = start; //指向小于pivot位置
+        int j = i; //游走指针
+        while (j <= end){
+            int iv = input[i];
+            int jv = input[j];
+            if (jv < pivot) {
+                input[i] = jv;
+                input[j] = iv;
+                i++;
+            }
+            j++;
+        }
+        int iv = input[i];
+        input[end] = iv;
+        input[i] = pivot;
+        return i;
+    }
+    static public void gasStation() {
+        printFuncName();
+        int []gas = {1,2,3,4,5};
+        int []cost = {3,4,5,1,2};
+
+        int curSum = 0;
+        int min = 0;
+        int minIndex = 0;
+        for (int i = 0; i < gas.length; i++) {
+            int res = gas[i] - cost[i];
+            curSum += res;
+            if (curSum < min) {
+                min = curSum;
+                minIndex = i;
+            }
+        }
+        int result = -1;
+        if (curSum < 0 ) {
+            result = -1;
+        } else {
+            result = minIndex < gas.length ? minIndex + 1 : 0;
+        }
+        System.out.println(result);
+    }
+    /**
+     *
+     * @param treeNum 用-1表示null
+     * @return root
+     */
+    static public TreeNode FuncFillTreeByNum(int[] treeNum) {
+        TreeNode[] tree = new TreeNode[treeNum.length];
+        for (int i = 0; i < treeNum.length; i++
+        ) {
+            tree[i] = new TreeNode(treeNum[i]);
+        }
+
+        /**
+         逐层遍历，上一层跟下一层关联
+         */
+        int h = 0;
+        int sum = 0;
+        int count = treeNum.length;
+        while (sum < count) {
+            int i = 0;
+            int subC = 1<<h;
+            while (sum+subC < count && i < subC) { //注意下一层可能越界
+                int cur = sum + i;
+                int left = sum+subC+2*i;
+                int right = sum+subC+2*i+1;
+                if (tree[left].val != -1) {
+                    tree[cur].left = tree[left];
+                }
+                if (tree[right].val != -1) {
+                    tree[cur].right = tree[right];
+                }
+                i++;
+            }
+            sum += subC;
+            h++;
+        }
+        return tree[0];
+    }
+    static public void foreachTreeProblem() {
+        printFuncName();
+
+        int[] treeNum = {1,2,3,4,5,6,7};
+        TreeNode root = FuncFillTreeByNum(treeNum);
+
+        int depth = 0;
+        foreachTreeModel(root,  depth);
+        //注意 depth 不能被函数内部修改！为什么？
+        System.out.println(depth);
+
+        System.out.println(BFSmaxDepth(root));
+        System.out.println(DFSmaxDepth(root));
+    }
+
+    static int DFSmaxDepth(TreeNode root) {
+        if (root == null)
+            return 0;
+        //stack记录的是节点，而level中的元素和stack中的元素
+        //是同时入栈同时出栈，并且level记录的是节点在第几层
+        Stack<TreeNode> stack = new Stack<>();
+        Stack<Integer> level = new Stack<>();
+        stack.push(root);
+        level.push(1);
+        int max = 0;
+        while (!stack.isEmpty()) {
+            //stack中的元素和level中的元素同时出栈
+            TreeNode node = stack.pop();
+            int temp = level.pop();
+            max = Math.max(temp, max);
+            if (node.left != null) {
+                //同时入栈
+                stack.push(node.left);
+                level.push(temp + 1);
+            }
+            if (node.right != null) {
+                //同时入栈
+                stack.push(node.right);
+                level.push(temp + 1);
+            }
+        }
+        return max;
+    }
+    //一层一层遍历
+    static int BFSmaxDepth(TreeNode root) {
+        if (root == null)
+            return 0;
+        //创建一个队列
+        Deque<TreeNode> deque = new LinkedList<>();
+        deque.push(root);
+        int count = 0;
+        while (!deque.isEmpty()) {
+            //每一层的个数
+            int size = deque.size();
+            while (size-- > 0) {
+                TreeNode cur = deque.pop();
+                if (cur.left != null)
+                    deque.addLast(cur.left);
+                if (cur.right != null)
+                    deque.addLast(cur.right);
+            }
+            count++;
+        }
+        return count;
+    }
+
+    //用外部变量记录遍历次数，用局部变量会被栈帧记录
+    static int foreachIndex = 0;
+    static public void foreachTreeModel(TreeNode cur, int depth) {
+        if (cur == null) {
+            return;
+        }
+        //借助局部变量被栈帧记录统计遍历深度
+        depth++;
+        foreachIndex++;
+        String s = "index: " + foreachIndex + " val: " + cur.val + " depth: " + depth;
+        System.out.println(s);
+        if (cur.left == null && cur.right == null){
+            return;
+        }
+        //left
+        foreachTreeModel(cur.left, depth);
+        //right
+        foreachTreeModel(cur.right, depth);
+    }
+
+
+    static public void isPalindrome() {
+    printFuncName();
+        int[] input = new int[]{1, 2, 2, 1};
+        int val = 6;
+        ListNode head = null;
+        for (int i = input.length - 1; i >= 0; i--) {
+            head = new ListNode(input[i], head);
+        }
+        ListNode recHead = head;
+        ListNode s = head;
+        ListNode q = head;
+        while (q!=null){
+            s=s.next;
+            if (q.next == null) {
+                q=null;
+            } else {
+                q=q.next.next;
+            }
+        }
+
+        //reverse next
+        ListNode pre = null;
+        ListNode cur = s;
+        while (cur!=null) {
+            ListNode tempNext = cur.next;
+            cur.next = pre;
+            pre = cur;
+            cur = tempNext;
+        }
+
+        boolean res = true;
+        while (pre!= null && recHead !=null) {
+            if (pre.val != recHead.val) {
+                res = false;
+            }
+            pre = pre.next;
+            recHead = recHead.next;
+        }
+        System.out.println(res);
+    }
+    /**
+     * 合并链表
+     * 注意取到空的情况
+     */
+    public static void comblieChain(){
+        printFuncName();
+        int [] a1 = {1,2,4};
+        int [] a2 = {1, 3, 4};
+        ListNode n1 = null;
+        for (int i = a1.length - 1; i >= 0; i--) {
+            n1 = new ListNode(a1[i], n1);
+        }
+
+        ListNode n2 = null;
+        for (int i = a2.length - 1; i >= 0; i--) {
+            n2 = new ListNode(a2[i], n2);
+        }
+
+        ListNode list1 = n1;
+        ListNode list2 = n2;
+        ListNode first = new ListNode(-1, null);
+        ListNode cur = first;
+        while (list1 != null || list2 != null) {
+            ListNode aimNode = null;
+            if (list1 == null || list2 == null) {
+                aimNode = list1 == null ? list2 : list1;
+            } else {
+                aimNode = list1.val < list2.val ? list1 : list2;
+            }
+
+            if (aimNode == list1) {
+                list1 = list1.next;
+            } else {
+                list2 = list2.next;
+            }
+            cur.next = aimNode;
+            cur = cur.next;
+        }
+
+        ListNode res = first.next;
+        while (res != null) {
+            System.out.println(res.val);
+            res = res.next;
+        }
+    }
+
+    /**
+     * 字符串转数字
+     * 注意判断越界
+     */
+    public static void myAtoi(){
+        String str = " -4141 word";
+//        str = str.trim();
+        int s = 0;
+        while (s < str.length() && str.charAt(s) == ' ') {
+            s++;
+        }
+        str = str.substring(s);
+        int index = 0;
+        int sign = 1;
+        int res = 0;
+        if (str.charAt(0) == '-' || str.charAt(0) == '+') {
+            sign = str.charAt(0) == '-'? -1 : 1;
+            index++;
+        }
+        while (index < str.length()) {
+            int digit = str.charAt(index)-'0';
+            if (digit < 0 || digit > 9) break;
+            int temp = res;
+            res = res*10+digit;
+            //越界数字会改变
+            if (res/10 != temp) {
+                res = sign ==1 ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+                break;
+            }
+            index ++;
+        }
+        System.out.println(res*sign);
+    }
+
+    /**
+     * 最长公共子串
+     * 常规办法同时按列遍历，遍历两层变量较多，分治变成字符串两两求公共子串后代码明显简单
+     */
+    public static void longestCommanPre() {
+        printFuncName();
+        String []strs = {"flower","flow","flight"};
+        String pre = strs[0];
+        int index = 0;
+        while (index < strs.length) {
+            while (strs[index].indexOf(pre) != 0) {
+                pre = pre.substring(0, pre.length()-1);
+            }
+            index++;
+        }
+        System.out.println(pre);
+    }
+
+    /**
+     * 外观数列，数字读起来在描述前一个数字，如 1，11 1个1，21 两个1，1211，1个2两个1
+     * 注意生成字符串的时机有两个：前面跟当前不一样，遍历结束。注意不是一回事情，可能当前字符既要结束之前，又要遍历结束。
+     * 这就是基本功要多思考，要是分不清楚也没办法解决问题了。
+     */
+    public static void waiguanNum() {
+        printFuncName();
+
+        int n = 5;
+        //从2开始到n，因为核心循环只支持两位及以上的入参
+        String res = "11";
+        int nNum = 3;
+        while (nNum <= n){
+            StringBuilder str = new StringBuilder();
+            //拆分数字，按顺序相同数字计数
+            char pre = res.charAt(0);
+            int index = 1;
+            int count = 1;
+            char[] chars = res.toCharArray();
+            while (index < res.length()) {
+                char ch = chars[index];
+                //不一样的数字时生成字符串
+                if (pre != ch) {
+                    str.append(count);
+                    str.append(pre);
+                    pre = ch;
+                    count = 1;
+                } else {
+                    count++;
+                }
+                index ++;
+                //结束时生成字符串，注意区分两个字符串生成的区别，不是一个阶段事情，不能写在一起
+                if (index == chars.length) {
+                    str.append(count);
+                    str.append(pre);
+                    break;
+                }
+            }
+            res = str.toString();
+            nNum ++;
+        }
+
+        System.out.println(Integer.valueOf(res));
+    }
+
     /**
      * 吃桃子，每棵树上桃子个数存在数组nums，求限时 timeLimit 小时内吃完的最慢速度，1小时内如果吃光一个树上必须等下个小时才能换一棵数
+     * 教训：一定要想清楚，出问题也不能慌张
      */
     public static void huaweiChitaozi(){
         int []nums = new int[]{1, 3, 6, 8};
@@ -89,6 +498,7 @@ public class Main {
 
     /**
      * cpu个数m，任务耗时数组 nums，安排任务先安排耗时最短，任务结束后安排未安排任务，求完成所有任务总耗时
+     * 教训：审题一定要认真，不要怕描述复杂的问题，阅读问题的时间不会花太久不要着急
      */
     public static  void huaweiCPUCost(){
         int m = 3;
@@ -138,8 +548,15 @@ public class Main {
     }
     public static void findStringFirstOccur(){
         printFuncName();
-        System.out.println(strStr("abcd", "d"));
+        System.out.println(strStr("acacacd", "acacd"));
     }
+
+    /**
+     * KMP算法
+     * 预先计算出不匹配时回退后新的匹配位置，在不匹配时不必重新匹配，时间复杂度为n，而不是m*n
+     * next[j] 存储j之前不含j字符串最大前后缀相同长度
+     * acac[a]cd 不匹配 acac[d]时，回退到 ac[a]cd
+     */
     public static int strStr(String haystack, String needle) {
         char[] s = haystack.toCharArray();
         char[] p = needle.toCharArray();
@@ -148,12 +565,17 @@ public class Main {
         int[] next = new int[n];
         next[0] = -1;
         int i = 0, j = -1;
+        /**
+         * 字符串i存在next[i+1]
+         * 不匹配时回退，回退位置如果相等更新位置，否则回退到初始值
+         */
         while(i < n - 1) {
             if(j == -1 || p[i] == p[j]) {
                 i++;
                 j++;
                 next[i] = j;
             } else {
+                //回退
                 j = next[j];
             }
         }
